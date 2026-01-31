@@ -3,12 +3,39 @@ Pydantic schemas for course rating requests and responses.
 Provides validation and serialization for API endpoints.
 """
 from pydantic import BaseModel, Field, field_validator
-from typing import Dict
+from typing import Dict, Optional
+
+
+class RatingCreate(BaseModel):
+    """
+    Schema for creating or updating a course rating (authenticated).
+
+    Note: user_id is extracted from JWT token, not from request body.
+    This ensures users can only create/update their own ratings.
+
+    Validation:
+    - rating must be between 1 and 5 (inclusive)
+    """
+    rating: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="Rating value from 1 (worst) to 5 (best)"
+    )
+
+    @field_validator('rating')
+    @classmethod
+    def validate_rating_range(cls, v: int) -> int:
+        """Additional validation for rating range."""
+        if not 1 <= v <= 5:
+            raise ValueError('Rating must be between 1 and 5')
+        return v
 
 
 class RatingRequest(BaseModel):
     """
-    Schema for creating or updating a course rating.
+    Legacy schema for creating or updating a course rating.
+    Kept for backwards compatibility with unauthenticated endpoints.
 
     Validation:
     - user_id must be positive integer

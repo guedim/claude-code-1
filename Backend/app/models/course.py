@@ -28,6 +28,13 @@ class Course(BaseModel):
         cascade="all, delete-orphan"
     )
 
+    # One-to-many relationship with Class
+    classes = relationship(
+        "Class",
+        back_populates="course",
+        cascade="all, delete-orphan"
+    )
+
     # One-to-many relationship with CourseRating
     ratings = relationship(
         "CourseRating",

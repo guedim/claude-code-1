@@ -5,33 +5,7 @@ Tests actual database constraints (requires test database).
 import pytest
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from app.db.base import SessionLocal
-from app.models.course import Course
 from app.models.course_rating import CourseRating
-
-
-@pytest.fixture
-def db_session():
-    """Create database session for testing."""
-    session = SessionLocal()
-    yield session
-    session.rollback()
-    session.close()
-
-
-@pytest.fixture
-def sample_course(db_session):
-    """Create and persist sample course."""
-    course = Course(
-        name="Test Course",
-        description="Test Description",
-        thumbnail="https://example.com/thumb.jpg",
-        slug=f"test-course-{datetime.utcnow().timestamp()}"
-    )
-    db_session.add(course)
-    db_session.commit()
-    db_session.refresh(course)
-    return course
 
 
 class TestRatingConstraints:
@@ -142,5 +116,6 @@ class TestRatingConstraints:
         db_session.add(rating)
 
         # Act & Assert
-        with pytest.raises(IntegrityError, match="fk_course_ratings_course_id"):
+        # PostgreSQL auto-generates FK constraint name as "course_ratings_course_id_fkey"
+        with pytest.raises(IntegrityError, match="course_ratings_course_id"):
             db_session.commit()

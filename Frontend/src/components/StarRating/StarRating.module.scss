@@ -43,6 +43,42 @@
     white-space: nowrap;
   }
 
+  // Mode: Interactive
+  &.interactive {
+    .star {
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        transform: scale(1.15);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--focus-color, #4a90e2);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  // Mode: Disabled
+  &.disabled {
+    .star {
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
   // Size variants
   &.small {
     .star svg {

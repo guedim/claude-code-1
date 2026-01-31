@@ -3,10 +3,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.config import settings
+from app.core.auth import get_current_user, User, create_access_token
 from app.db.base import engine, get_db
 from app.services.course_service import CourseService
 from app.schemas.rating import (
     RatingRequest,
+    RatingCreate,
     RatingResponse,
     RatingStatsResponse,
     ErrorResponse
@@ -151,16 +153,22 @@ def get_class_by_id(class_id: int, db: Session = Depends(get_db)) -> dict:
     responses={
         201: {"description": "Rating created successfully"},
         400: {"model": ErrorResponse, "description": "Validation error"},
+        401: {"model": ErrorResponse, "description": "Authentication required"},
         404: {"model": ErrorResponse, "description": "Course not found"}
     }
 )
 def add_course_rating(
     course_id: int,
-    rating_data: RatingRequest,
+    rating_data: RatingCreate,
+    current_user: User = Depends(get_current_user),
     course_service: CourseService = Depends(get_course_service)
 ) -> RatingResponse:
     """
     Add a new rating to a course or update existing rating.
+
+    Security:
+    - Requires valid JWT authentication
+    - User can only create ratings for themselves (user_id from token)
 
     Business Logic:
     - If user already has an active rating: UPDATE existing
@@ -168,20 +176,19 @@ def add_course_rating(
     - Returns HTTP 201 for new ratings
 
     Request Body:
-    - user_id: User ID (positive integer)
     - rating: Rating value (1-5)
 
     Example:
         POST /courses/1/ratings
+        Authorization: Bearer <token>
         {
-            "user_id": 42,
             "rating": 5
         }
     """
     try:
         result = course_service.add_course_rating(
             course_id=course_id,
-            user_id=rating_data.user_id,
+            user_id=current_user.id,
             rating=rating_data.rating
         )
         return RatingResponse(**result)
@@ -349,43 +356,49 @@ def get_user_course_rating(
     responses={
         200: {"description": "Rating updated successfully"},
         400: {"model": ErrorResponse, "description": "Validation error"},
+        401: {"model": ErrorResponse, "description": "Authentication required"},
+        403: {"model": ErrorResponse, "description": "Cannot update another user's rating"},
         404: {"model": ErrorResponse, "description": "Rating not found"}
     }
 )
 def update_course_rating(
     course_id: int,
     user_id: int,
-    rating_data: RatingRequest,
+    rating_data: RatingCreate,
+    current_user: User = Depends(get_current_user),
     course_service: CourseService = Depends(get_course_service)
 ) -> RatingResponse:
     """
     Update an existing course rating.
 
+    Security:
+    - Requires valid JWT authentication
+    - User can only update their own ratings
+
     Semantics: PUT = Update existing resource
     Fails with 404 if rating doesn't exist (use POST to create).
 
     Request Body:
-    - user_id: Must match path parameter (validation)
     - rating: New rating value (1-5)
 
     Example:
         PUT /courses/1/ratings/42
+        Authorization: Bearer <token>
         {
-            "user_id": 42,
             "rating": 3
         }
     """
-    # Validar que user_id del body coincide con user_id del path
-    if rating_data.user_id != user_id:
+    # Authorization check: user can only update their own ratings
+    if user_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="user_id in body must match user_id in path"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot update another user's rating"
         )
 
     try:
         result = course_service.update_course_rating(
             course_id=course_id,
-            user_id=user_id,
+            user_id=current_user.id,
             rating=rating_data.rating
         )
         return RatingResponse(**result)
@@ -402,16 +415,23 @@ def update_course_rating(
     tags=["ratings"],
     responses={
         204: {"description": "Rating deleted successfully"},
+        401: {"model": ErrorResponse, "description": "Authentication required"},
+        403: {"model": ErrorResponse, "description": "Cannot delete another user's rating"},
         404: {"model": ErrorResponse, "description": "Rating not found"}
     }
 )
 def delete_course_rating(
     course_id: int,
     user_id: int,
+    current_user: User = Depends(get_current_user),
     course_service: CourseService = Depends(get_course_service)
 ) -> None:
     """
     Delete (soft delete) a course rating.
+
+    Security:
+    - Requires valid JWT authentication
+    - User can only delete their own ratings
 
     Sets deleted_at timestamp, preserving data for historical analysis.
     Returns HTTP 204 No Content on success.
@@ -419,11 +439,19 @@ def delete_course_rating(
 
     Example:
         DELETE /courses/1/ratings/42
+        Authorization: Bearer <token>
 
         Response:
         HTTP 204 No Content
     """
-    success = course_service.delete_course_rating(course_id, user_id)
+    # Authorization check: user can only delete their own ratings
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot delete another user's rating"
+        )
+
+    success = course_service.delete_course_rating(course_id, current_user.id)
 
     if not success:
         raise HTTPException(
@@ -432,3 +460,34 @@ def delete_course_rating(
         )
 
     return None
+
+
+# ==================== AUTH ENDPOINTS (for testing) ====================
+
+@app.post(
+    "/auth/token",
+    tags=["auth"],
+    responses={
+        200: {"description": "Token generated successfully"}
+    }
+)
+def generate_test_token(user_id: int, email: str = "test@example.com") -> dict:
+    """
+    Generate a test JWT token for development/testing purposes.
+
+    WARNING: This endpoint should be disabled or secured in production.
+    In production, tokens should be issued by a proper authentication service.
+
+    Args:
+        user_id: The user ID to encode in the token
+        email: Optional email to include
+
+    Returns:
+        Access token and token type
+    """
+    access_token = create_access_token(user_id=user_id, email=email)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user_id
+    }

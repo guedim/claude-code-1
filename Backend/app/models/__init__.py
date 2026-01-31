@@ -3,8 +3,9 @@
 
 from .base import BaseModel, Base
 from .teacher import Teacher
-from .course import Course
 from .lesson import Lesson
+from .class_ import Class
+from .course import Course
 from .course_teacher import course_teachers
 from .course_rating import CourseRating
 
@@ -13,8 +14,9 @@ __all__ = [
     'BaseModel',
     'Base',
     'Teacher',
-    'Course',
     'Lesson',
+    'Class',
+    'Course',
     'course_teachers',
     'CourseRating'
 ] 

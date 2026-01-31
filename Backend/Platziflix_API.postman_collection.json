@@ -1,0 +1,956 @@
+{
+  "info": {
+    "_postman_id": "platziflix-api-collection",
+    "name": "Platziflix API",
+    "description": "Complete API collection for Platziflix - Online Course Platform\n\n## Getting Started\n\n1. Import this collection into Postman\n2. Import the environment file (Platziflix_API.postman_environment.json)\n3. Run \"1. Get JWT Token\" first to authenticate\n4. All other requests will automatically use the token\n\n## Authentication\n\nThe collection uses JWT tokens. Run the token endpoint first, and the token will be automatically saved to the environment variable.\n\n## Base URL\n\nDefault: http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "42",
+      "type": "string"
+    },
+    {
+      "key": "course_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints for JWT token management",
+      "item": [
+        {
+          "name": "1. Get JWT Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Save the token to environment variable",
+                  "if (jsonData.access_token) {",
+                  "    pm.environment.set(\"jwt_token\", jsonData.access_token);",
+                  "    pm.environment.set(\"user_id\", jsonData.user_id);",
+                  "    console.log(\"Token saved successfully!\");",
+                  "    console.log(\"User ID: \" + jsonData.user_id);",
+                  "}",
+                  "",
+                  "// Tests",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has token_type bearer\", function () {",
+                  "    pm.expect(jsonData.token_type).to.eql('bearer');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/token?user_id={{user_id}}&email=test@example.com",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "token"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{user_id}}",
+                  "description": "User ID to encode in the token"
+                },
+                {
+                  "key": "email",
+                  "value": "test@example.com",
+                  "description": "Optional email address"
+                }
+              ]
+            },
+            "description": "**IMPORTANT: Run this first!**\n\nGenerates a JWT token for authentication. The token is automatically saved to the `jwt_token` environment variable.\n\n### How it works:\n1. Send this request\n2. The token is automatically saved\n3. All other authenticated requests will use this token\n\n### Parameters:\n- `user_id`: The user ID to encode in the token\n- `email`: Optional email address"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/auth/token?user_id=42&email=test@example.com"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"user_id\": 42\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "API health check endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"API status is ok\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('ok');",
+                  "});",
+                  "",
+                  "pm.test(\"Database is connected\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.database).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check API and database health status.\n\n**Authentication:** Not required"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "description": "Course management endpoints",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Courses have required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('id');",
+                  "        pm.expect(jsonData[0]).to.have.property('name');",
+                  "        pm.expect(jsonData[0]).to.have.property('slug');",
+                  "        pm.expect(jsonData[0]).to.have.property('average_rating');",
+                  "        pm.expect(jsonData[0]).to.have.property('total_ratings');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses",
+              "host": ["{{base_url}}"],
+              "path": ["courses"]
+            },
+            "description": "Get all available courses.\n\n**Authentication:** Not required\n\n**Response includes:**\n- Course ID, name, description\n- Thumbnail URL\n- Slug for URLs\n- Average rating and total ratings"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Course by Slug",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Course has required fields\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('name');",
+                  "        pm.expect(jsonData).to.have.property('classes');",
+                  "        pm.expect(jsonData).to.have.property('rating_distribution');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/:slug",
+              "host": ["{{base_url}}"],
+              "path": ["courses", ":slug"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "intro-python",
+                  "description": "Course URL slug"
+                }
+              ]
+            },
+            "description": "Get detailed course information by slug.\n\n**Authentication:** Not required\n\n**Response includes:**\n- Course details\n- List of classes\n- Teachers\n- Rating statistics and distribution"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ratings",
+      "description": "Course rating endpoints - some require authentication",
+      "item": [
+        {
+          "name": "Create Rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 401\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 401, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test(\"Rating was created\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('rating');",
+                  "        pm.expect(jsonData).to.have.property('user_id');",
+                  "    });",
+                  "    ",
+                  "    // Save rating ID for later use",
+                  "    pm.environment.set(\"rating_id\", pm.response.json().id);",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Auth error message\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.detail).to.include('Authentication');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings"]
+            },
+            "description": "Create a new rating for a course.\n\n**Authentication:** Required (JWT)\n\n**Important:** Run \"Get JWT Token\" first!\n\n**Request Body:**\n- `rating`: Integer from 1 to 5\n\n**Business Logic:**\n- If user already rated: updates existing rating\n- If no rating exists: creates new rating"
+          },
+          "response": [
+            {
+              "name": "Success - Rating Created",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 5\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 1,\n  \"course_id\": 1,\n  \"user_id\": 42,\n  \"rating\": 5,\n  \"created_at\": \"2025-01-31T10:30:00\",\n  \"updated_at\": \"2025-01-31T10:30:00\"\n}"
+            },
+            {
+              "name": "Error - No Authentication",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"detail\": \"Authentication required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Course Ratings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings"]
+            },
+            "description": "Get all ratings for a specific course.\n\n**Authentication:** Not required\n\n**Response:** Array of rating objects ordered by creation date (newest first)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rating Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Has required statistics fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('average_rating');",
+                  "    pm.expect(jsonData).to.have.property('total_ratings');",
+                  "    pm.expect(jsonData).to.have.property('rating_distribution');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/stats",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "stats"]
+            },
+            "description": "Get aggregated rating statistics for a course.\n\n**Authentication:** Not required\n\n**Response includes:**\n- `average_rating`: Average of all ratings (0.0 if none)\n- `total_ratings`: Total count of ratings\n- `rating_distribution`: Count per rating value (1-5)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User's Rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Rating has required fields\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('rating');",
+                  "        pm.expect(jsonData).to.have.property('user_id');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "user", "{{user_id}}"]
+            },
+            "description": "Get a specific user's rating for a course.\n\n**Authentication:** Not required\n\n**Response:**\n- 200: User's rating object\n- 204: User hasn't rated this course"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is valid\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Rating was updated\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('rating');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Authorization error\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.detail).to.include('Cannot update');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "{{user_id}}"]
+            },
+            "description": "Update an existing rating.\n\n**Authentication:** Required (JWT)\n\n**Authorization:** Users can only update their own ratings\n\n**Request Body:**\n- `rating`: New rating value (1-5)\n\n**Errors:**\n- 401: No authentication\n- 403: Trying to update another user's rating\n- 404: Rating not found"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is valid\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 401, 403, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 204) {",
+                  "    pm.test(\"Rating deleted successfully\", function () {",
+                  "        pm.expect(pm.response.text()).to.be.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "{{user_id}}"]
+            },
+            "description": "Delete a rating (soft delete).\n\n**Authentication:** Required (JWT)\n\n**Authorization:** Users can only delete their own ratings\n\n**Response:** 204 No Content on success\n\n**Errors:**\n- 401: No authentication\n- 403: Trying to delete another user's rating\n- 404: Rating not found"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Security Tests",
+      "description": "Test security controls - these should fail with 401/403",
+      "item": [
+        {
+          "name": "Create Rating WITHOUT Token (Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should return 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message mentions authentication\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail.toLowerCase()).to.include('authentication');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings"]
+            },
+            "description": "**Security Test:** Attempt to create a rating without authentication.\n\n**Expected Result:** 401 Unauthorized"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Another User's Rating (Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should return 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message mentions cannot delete\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.include('Cannot delete');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/99999",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "99999"]
+            },
+            "description": "**Security Test:** Attempt to delete another user's rating.\n\n**Expected Result:** 403 Forbidden\n\n(Assuming you're authenticated as user 42 but trying to delete user 99999's rating)"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Token (Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should return 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message mentions credentials\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail.toLowerCase()).to.include('credentials');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "invalid_token_12345",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings"]
+            },
+            "description": "**Security Test:** Attempt to use an invalid JWT token.\n\n**Expected Result:** 401 Unauthorized"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Complete Flow",
+      "description": "Run these requests in order to test the complete rating flow",
+      "item": [
+        {
+          "name": "Step 1: Get Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"jwt_token\", jsonData.access_token);",
+                  "pm.environment.set(\"user_id\", jsonData.user_id);",
+                  "",
+                  "pm.test(\"Token obtained\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "console.log(\"Ready for next steps!\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/token?user_id=100&email=flow-test@example.com",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "token"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "100"
+                },
+                {
+                  "key": "email",
+                  "value": "flow-test@example.com"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 2: Check Initial Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Got initial stats\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "console.log(\"Initial average: \" + jsonData.average_rating);",
+                  "console.log(\"Initial total: \" + jsonData.total_ratings);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings/stats",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 3: Create Rating (5 stars)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rating created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "console.log(\"Created rating with ID: \" + jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 4: Verify Rating Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rating exists\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Rating is 5\", function () {",
+                  "    pm.expect(jsonData.rating).to.eql(5);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings", "user", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 5: Update to 3 stars",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rating updated\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Rating is now 3\", function () {",
+                  "    pm.expect(jsonData.rating).to.eql(3);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 6: Delete Rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rating deleted\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "console.log(\"Rating deleted successfully!\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 7: Verify Deletion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rating no longer exists\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "console.log(\"Complete flow finished successfully!\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/1/ratings/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1", "ratings", "user", "{{user_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

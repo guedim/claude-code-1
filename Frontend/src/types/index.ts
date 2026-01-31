@@ -22,6 +22,8 @@ export interface Class {
 
 // Course Detail type
 export interface CourseDetail extends Course {
+  title: string; // Titulo del curso (puede diferir de name)
+  teacher: string; // Nombre del profesor
   description: string;
   classes: Class[];
 }

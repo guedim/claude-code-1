@@ -4,6 +4,11 @@
 
 Platziflix es una plataforma online de cursos simple y directa. Cada curso contiene clases con descripciones básicas. Es una implementación minimalista enfocada en la funcionalidad core de distribución de contenido educativo.
 
+## API Documentation
+
+- **Swagger UI**: http://localhost:8000/docs
+- **Documentación detallada**: [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - Guía completa con autenticación JWT y ejemplos
+
 ## Stack Tecnológico
 
 ### Backend
