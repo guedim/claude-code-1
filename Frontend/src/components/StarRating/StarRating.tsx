@@ -75,8 +75,11 @@ export const StarRating = ({
   // Estado para el rating durante hover (solo en modo interactivo)
   const [hoverRating, setHoverRating] = useState<number>(0);
 
-  // Determinar si el componente es interactivo
-  const isInteractive = !readonly && !disabled && !!onRatingChange;
+  // Determinar si debe mostrar botones (tiene handler y no es readonly)
+  const showButtons = !readonly && !!onRatingChange;
+
+  // Determinar si la interacción está habilitada
+  const isInteractive = showButtons && !disabled;
 
   /**
    * Determina el estado de relleno de cada estrella
@@ -158,7 +161,7 @@ export const StarRating = ({
   const containerClasses = [
     styles.starRating,
     styles[size],
-    isInteractive ? styles.interactive : '',
+    showButtons ? styles.interactive : '',
     disabled ? styles.disabled : '',
     className
   ].filter(Boolean).join(' ');
@@ -174,7 +177,7 @@ export const StarRating = ({
     >
       <div className={styles.stars}>
         {[1, 2, 3, 4, 5].map((star) => (
-          isInteractive ? (
+          showButtons ? (
             <button
               key={star}
               type="button"
@@ -185,7 +188,7 @@ export const StarRating = ({
               disabled={disabled}
               aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
               aria-pressed={rating === star}
-              tabIndex={0}
+              tabIndex={disabled ? -1 : 0}
             >
               <StarIcon fillState={getStarFillState(star)} />
             </button>

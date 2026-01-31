@@ -5,9 +5,18 @@
 
 import type { CourseRating, RatingRequest, RatingStats } from '@/types/rating';
 import { ApiError } from '@/types/rating';
+import { getGlobalAuthHeader } from '@/contexts/AuthContext';
 
 // Base URL del backend API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// Helper para obtener headers con autenticación
+function getHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    ...getGlobalAuthHeader(),
+  };
+}
 
 // Opciones extendidas de fetch con timeout
 interface FetchOptions extends RequestInit {
@@ -89,9 +98,7 @@ async function getRatingStats(courseId: number): Promise<RatingStats> {
   try {
     const response = await fetchWithTimeout(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
 
     return await handleApiResponse<RatingStats>(response);
