@@ -146,3 +146,6 @@ La colección incluye endpoints para:
 - [Documentación de la API](Backend/API_DOCUMENTATION.md)
 - [Guía de Migraciones](Backend/README_MIGRATIONS.md)
 - [Guía de Testing](Backend/TESTING_README.md)
+
+
+
