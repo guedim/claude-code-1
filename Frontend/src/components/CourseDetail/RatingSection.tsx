@@ -10,13 +10,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { StarRating } from '@/components/StarRating/StarRating';
 import { ratingsApi } from '@/services/ratingsApi';
 import { ApiError } from '@/types/rating';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './RatingSection.module.scss';
 
 interface RatingSectionProps {
   courseId: number;
   initialAverageRating?: number;
   initialTotalRatings?: number;
-  userId: number; // Temporal: hardcoded hasta implementar auth
 }
 
 /**
@@ -46,8 +46,10 @@ export const RatingSection = ({
   courseId,
   initialAverageRating = 0,
   initialTotalRatings = 0,
-  userId,
 }: RatingSectionProps) => {
+  const { user } = useAuth();
+  const userId = user?.userId ?? 0;
+
   // Estados del componente
   const [userRating, setUserRating] = useState<number>(0);
   const [averageRating, setAverageRating] = useState(initialAverageRating);

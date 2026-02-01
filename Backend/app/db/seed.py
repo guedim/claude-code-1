@@ -6,7 +6,7 @@ This script creates sample data for testing and development.
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.db.base import SessionLocal
-from app.models import Teacher, Course, Lesson, course_teachers
+from app.models import Teacher, Course, Lesson, course_teachers, CourseRating
 from app.core.config import settings
 
 
@@ -44,7 +44,7 @@ def create_sample_data():
         course1 = Course(
             name="Curso de React",
             description="Aprende React desde cero hasta convertirte en un desarrollador profesional",
-            thumbnail="https://via.placeholder.com/300x200?text=React+Course",
+            thumbnail="https://placehold.co/300x200/61DAFB/000000?text=React",
             slug="curso-de-react",
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -53,7 +53,7 @@ def create_sample_data():
         course2 = Course(
             name="Curso de Python",
             description="Domina Python y sus frameworks más populares",
-            thumbnail="https://via.placeholder.com/300x200?text=Python+Course",
+            thumbnail="https://placehold.co/300x200/3776AB/FFFFFF?text=Python",
             slug="curso-de-python",
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -62,7 +62,7 @@ def create_sample_data():
         course3 = Course(
             name="Curso de JavaScript",
             description="JavaScript moderno y sus mejores prácticas",
-            thumbnail="https://via.placeholder.com/300x200?text=JavaScript+Course",
+            thumbnail="https://placehold.co/300x200/F7DF1E/000000?text=JavaScript",
             slug="curso-de-javascript",
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -163,6 +163,7 @@ def clear_all_data():
 
     try:
         # Delete in reverse order to avoid foreign key constraints
+        db.query(CourseRating).delete()
         db.query(Lesson).delete()
         db.execute(course_teachers.delete())
         db.query(Course).delete()

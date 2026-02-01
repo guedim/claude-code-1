@@ -124,9 +124,7 @@ async function getCourseRatings(courseId: number): Promise<CourseRating[]> {
   try {
     const response = await fetchWithTimeout(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
 
     return await handleApiResponse<CourseRating[]>(response);
@@ -152,9 +150,7 @@ async function getUserRating(
   try {
     const response = await fetchWithTimeout(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
 
     return await handleApiResponse<CourseRating>(response);
@@ -179,9 +175,7 @@ async function createRating(
 
   const response = await fetchWithTimeout(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify(request),
   });
 
@@ -201,9 +195,7 @@ async function updateRating(
 
   const response = await fetchWithTimeout(url, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify(request),
   });
 
@@ -219,9 +211,7 @@ async function deleteRating(courseId: number, userId: number): Promise<void> {
 
   const response = await fetchWithTimeout(url, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
   });
 
   // 204 No Content es exitoso
