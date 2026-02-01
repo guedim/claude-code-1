@@ -52,12 +52,14 @@ app = FastAPI(
 )
 
 # CORS middleware configuration
+# Handles preflight OPTIONS requests and adds CORS headers to responses
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
+    expose_headers=["*"],  # Allow browser to access response headers
 )
 
 
